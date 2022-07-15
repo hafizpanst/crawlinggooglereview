@@ -35,7 +35,7 @@ def crawl(driver,nama_kpp):
     driver.maximize_window()
 
     ulang = 0
-    while ulang < 10:
+    while ulang < 5:
         ulang += 1
         try:
             driver.get(link)
@@ -89,9 +89,15 @@ def crawl(driver,nama_kpp):
                     scrollBottom(scroll_to_bottom);"""
                 )
 
-                sleep(1)
+                sleep(2)
                 i += 1
                 j = 0
+
+                more_list = driver.find_elements_by_link_text("More")
+                for m in more_list:
+                    m.click()
+
+                sleep(1)
                 continue
 
             list_review += [{
@@ -100,8 +106,6 @@ def crawl(driver,nama_kpp):
                 "review" : r,
             }]
 
-            print([x, r])
-    
     except Exception as e:
         error["error"] = e
         None 
@@ -127,6 +131,7 @@ def main():
     error_list = []
     count_kpp = 0
     for kpp in kpp_list:
+        count_kpp +=1 
         if count_kpp %5 == 4:
             driver_chrome.close()
             driver_chrome = webdriver.Chrome()
