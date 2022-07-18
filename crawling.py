@@ -1,16 +1,18 @@
+from dis import code_info
+from itertools import count
 from selenium import webdriver
 from time import sleep
 from selenium.webdriver.common.action_chains import ActionChains
 import pandas as pd
 from bs4 import BeautifulSoup as bs
+from datetime import datetime
+from combining_file import combining_data
 
 
 
 kpp_list = ['KPP Pratama Jakarta Tebet','KPP Pratama Jakarta Tanjung Priok','KPP Pratama Jakarta Tanah Abang Tiga','KPP Pratama Jakarta Tanah Abang Satu','KPP Pratama Jakarta Tanah Abang Dua','KPP Pratama Jakarta Tambora','KPP Pratama Jakarta Tamansari','KPP Pratama Jakarta Sunter','KPP Pratama Jakarta Setiabudi Tiga','KPP Pratama Jakarta Setiabudi Satu','KPP Pratama Jakarta Setiabudi Empat','KPP Pratama Jakarta Setiabudi Dua','KPP Pratama Jakarta Senen','KPP Pratama Jakarta Sawah Besar Satu','KPP Pratama Jakarta Sawah Besar Dua','KPP Pratama Jakarta Pulogadung','KPP Pratama Jakarta Pluit','KPP Pratama Jakarta Pesanggrahan','KPP Pratama Jakarta Penjaringan','KPP Pratama Jakarta Pasar Rebo','KPP Pratama Jakarta Pasar Minggu','KPP Pratama Jakarta Pancoran','KPP Pratama Jakarta Palmerah','KPP Pratama Jakarta Pademangan','KPP Pratama Jakarta Menteng Tiga','KPP Pratama Jakarta Menteng Satu','KPP Pratama Jakarta Menteng Dua','KPP Pratama Jakarta Matraman','KPP Pratama Jakarta Mampang Prapatan','KPP Pratama Jakarta Kramat Jati','KPP Pratama Jakarta Koja','KPP Pratama Jakarta Kembangan','KPP Pratama Jakarta Kemayoran','KPP Pratama Jakarta Kelapa Gading','KPP Pratama Jakarta Kebon Jeruk Satu','KPP Pratama Jakarta Kebon Jeruk Dua','KPP Pratama Jakarta Kebayoran Lama','KPP Pratama Jakarta Kebayoran Baru Tiga','KPP Pratama Jakarta Kebayoran Baru Satu','KPP Pratama Jakarta Kebayoran Baru Empat','KPP Pratama Jakarta Kebayoran Baru Dua','KPP Pratama Jakarta Kalideres','KPP Pratama Jakarta Jatinegara','KPP Pratama Jakarta Jagakarsa','KPP Pratama Jakarta Grogol Petamburan','KPP Pratama Jakarta Gambir Tiga','KPP Pratama Jakarta Gambir Satu','KPP Pratama Jakarta Gambir Empat','KPP Pratama Jakarta Gambir Dua','KPP Pratama Jakarta Duren Sawit','KPP Pratama Jakarta Cilandak','KPP Pratama Jakarta Cengkareng','KPP Pratama Jakarta Cempaka Putih','KPP Pratama Jakarta Cakung','KPP Madya Jakarta Utara','KPP Madya Jakarta Timur','KPP Madya Jakarta Selatan II','KPP Madya Jakarta Selatan I','KPP Madya Jakarta Pusat','KPP Madya Jakarta Barat','KPP Madya Dua Jakarta Utara','KPP Madya Dua Jakarta Timur','KPP Madya Dua Jakarta Selatan II','KPP Madya Dua Jakarta Selatan I','KPP Madya Dua Jakarta Pusat','KPP Madya Dua Jakarta Barat']
 
-print("crawling {kpp} kpp".format(kpp=len(kpp_list)))
-
-# kpp_list = ['KPP Madya Jakarta Barat','KPP Madya Dua Jakarta Utara','KPP Madya Dua Jakarta Timur','KPP Madya Dua Jakarta Selatan II','KPP Madya Dua Jakarta Selatan I','KPP Madya Dua Jakarta Pusat','KPP Madya Dua Jakarta Barat']
+# kpp_list = ['KPP Madya Dua Jakarta Barat','KPP Madya Dua Jakarta Pusat','KPP Madya Dua Jakarta Selatan II','KPP Madya Dua Jakarta Timur','KPP Madya Dua Jakarta Utara','KPP Madya Jakarta Barat','KPP Madya Jakarta Selatan I','KPP Madya Jakarta Selatan II','KPP Madya Jakarta Timur','KPP Pratama Jakarta Duren Sawit','KPP Pratama Jakarta Gambir Empat','KPP Pratama Jakarta Gambir Satu','KPP Pratama Jakarta Gambir Tiga','KPP Pratama Jakarta Kebayoran Baru Empat','KPP Pratama Jakarta Kebon Jeruk Dua','KPP Pratama Jakarta Koja','KPP Pratama Jakarta Menteng Satu','KPP Pratama Jakarta Menteng Tiga','KPP Pratama Jakarta Setiabudi Empat','KPP Pratama Jakarta Tamansari','KPP Pratama Jakarta Tambora']
 
 
 
@@ -22,10 +24,8 @@ def saving_page(filename, f):
 
 
 def crawl(driver,nama_kpp):
-    error = {
-        "kpp" : nama_kpp,
-        "error" : "",
-    }
+    error = {}
+
     kpp = nama_kpp.split(" ")
     kpp = "+".join(kpp)
 
@@ -41,7 +41,6 @@ def crawl(driver,nama_kpp):
             driver.get(link)
             sleep(5)
             a = driver.find_element_by_link_text("Lihat semua ulasan Google")
-            # a = driver.find_element_by_xpath("/html/body/div[7]/div/div[10]/div[2]/div/div/div[2]/div/div[3]/div/div/div/div/div[5]/div/div/div/div/div/div/div/span/span/a/span")
             a.click()
             break
 
@@ -107,8 +106,11 @@ def crawl(driver,nama_kpp):
             }]
 
     except Exception as e:
-        error["error"] = e
-        None 
+        error = {
+            "kpp" : nama_kpp,
+            "error" : e,
+            "time" : datetime.now(),
+        }
 
 
     # export data review
@@ -131,19 +133,23 @@ def main():
     error_list = []
     count_kpp = 0
     for kpp in kpp_list:
-        count_kpp +=1 
+        count_kpp +=1
+
         if count_kpp %5 == 4:
             driver_chrome.close()
             driver_chrome = webdriver.Chrome()
 
-        error_list += [crawl(driver_chrome, kpp)]
+        e = crawl(driver_chrome, kpp)
+        if e != {}:
+            error_list += [e]
 
+        if count_kpp == len(kpp_list):
+            driver_chrome.close()
 
-    for x in range(len(error_list)):
-        print([x, error_list[x]])
+    df_error = pd.DataFrame(error_list)
+    df_error.to_csv("log.csv", index = False)
 
-    driver_chrome.close()
-
+    combining_data()
 
 if __name__ == "__main__":
     main()
