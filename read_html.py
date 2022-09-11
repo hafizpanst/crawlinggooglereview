@@ -1,6 +1,6 @@
+from datetime import datetime
 import pandas as pd
 from bs4 import BeautifulSoup
-from lxml import etree
 
 
 constant = {
@@ -13,12 +13,18 @@ constant = {
         "loc" : "TSUbDb",
     },
     "review" : {
-        "tag" : "span",
-        "loc" : "review-full-text",
+        # "tag" : "span",
+        # "loc" : "review-full-text",
+        "tag" : "div",
+        "loc" : "Jtu6Td",
     },
     "whole_review" : {
         "tag" : "div",
         "loc" : "WMbnJf vY6njf gws-localreviews__google-review",
+    },
+    "waktu_review" : {
+        "tag" : "div",
+        "loc" : "PuaHbe",
     }
 }
 
@@ -33,9 +39,11 @@ def find_review(nama_kpp, html):
     for i in range(len(f)):
         z = {
             "nama_kpp" : nama_kpp,
-            "nama_reviewer" : "",
-            "rating" : "",
-            "review" : "",
+            "nama_reviewer" : None,
+            "rating" : None,
+            "review" : None,
+            "waktu_review" : None,
+            "tanggal_olah" : datetime.today(),
         }
 
         nama_reviewer = f[i].find_all(constant["nama_reviewer"]["tag"], {"class" : constant["nama_reviewer"]["loc"]})
@@ -43,6 +51,7 @@ def find_review(nama_kpp, html):
 
         rating = f[i].find_all(constant["rating"]["tag"], {"class" : constant["rating"]["loc"]})
         z["rating"] = rating[0]["aria-label"]
+        z["waktu_review"] = f[i].find_all(constant["waktu_review"]["tag"], {"class" : constant["waktu_review"]["loc"]})[0].text
 
         try:
             review = f[i].find_all(constant["review"]["tag"], {"class" : constant["review"]["loc"]})
@@ -88,10 +97,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-# /html/body/span[2]/g-lightbox/div/div[2]/div[3]/span/div/div/div/div[2]/div[4]/div[{i}]/div[2]/div[{j}]
-# "Fam1ne EBe2gf" >> span >> rating
-# "TSUbDb" >> div >> nama reviewer
-# "review-full-text" >> span >> review
